@@ -3,15 +3,18 @@ import streamlit as st
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 # from langchain.vectorstores import Chroma
 from langchain_community.vectorstores import Chroma
+# from langchain_community.document_loaders import PyPDFLoader
+# from langchain.text_splitter import RecursiveCharacterTextSplitter
+# import os
 
 
-import os 
-from dotenv import load_dotenv
+# import os 
+# from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
 
 # HF_TOKEN = os.getenv("HF_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 embeddings = SentenceTransformerEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
 
 ############################################### Install if using openAI
@@ -32,7 +35,7 @@ from huggingface_hub import InferenceClient
 # vectordb.persist()
 
 ################################################### If you already have embeddings
-vectordb = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
+vectordb = Chroma(persist_directory="./chroma_fcdb", embedding_function=embeddings)
 
 
 # import os
@@ -55,13 +58,15 @@ vectordb = Chroma(persist_directory="./chroma_db", embedding_function=embeddings
 
 ############################################ Hugging face api calls are used to answer the query based on the final context provided
 
-def get_answer(question, context):
+def get_answer(context, question):
     client = InferenceClient("HuggingFaceH4/zephyr-7b-beta", token= "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")
     # client = InferenceClient(model="meta-llama/Llama-2-7b-chat-hf", token=HF_TOKEN)
-    res = "This is beyond the capability of the model to answer this right now"
+    res = "Response is empty"
     try:
-        res = client.text_generation(f"System: Use the following pieces of context to answer the user's question. If you don't know the answer, just say that you don't know, don't try to make up an answer.{context} Human:{question}  Note: only give the crisp answer in same font in the format Answer : ", max_new_tokens=2300)
-
+        res = client.text_generation(f"Use the following pieces of context to answer the user's question, User's question is:{question} and Context is :{context}.", max_new_tokens=500)
+        # st.write("context is :",context)
+        # st.write("Question is :", question)
+        # st.write("result is :", res)
     except:
         st.error('This is beyond the capability of the model to answer this right now.', icon="🚨")
         
@@ -69,8 +74,10 @@ def get_answer(question, context):
 
 def hf_llm_qa(query):
     matching_docs = vectordb.similarity_search(query)
+    # st.write(matching_docs)
     # matching_docs
     answer = get_answer(matching_docs,query)
+    # st.write("answer is :", answer)
     return answer
 
 
@@ -99,3 +106,4 @@ if __name__ == '__main__':
     main()
 
     
+
